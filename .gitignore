@@ -1,12 +1,25 @@
+# Android Studio & IntelliJ IDEA project files
 *.iml
-.gradle
-/local.properties
+.idea/
+.idea/*
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml
 /.idea/workspace.xml
 /.idea/navEditor.xml
 /.idea/assetWizardSettings.xml
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+!.idea/copyright
+# Keep the code styles.
+!/.idea/codeStyles
+/.idea/codeStyles/*
+!/.idea/codeStyles/Project.xml
+!/.idea/codeStyles/codeStyleConfig.xml
+
+.gradle
+/local.properties
 .DS_Store
 /build
 /captures
