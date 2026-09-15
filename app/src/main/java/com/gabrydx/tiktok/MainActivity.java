@@ -11,61 +11,61 @@ package com.gabrydx.tiktok;
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.os.Build;
-import android.util.Base64;
-import android.view.View.OnClickListener;
-import android.webkit.CookieManager;
-import android.webkit.WebSettings;
-import android.webkit.WebViewClient;
-import android.widget.EditText;
-import android.webkit.WebView;
-import android.widget.Button;
-import android.app.Activity;
 import android.os.Bundle;
-import android.view.View;
+import android.util.Base64;
+import android.webkit.CookieManager;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
-import java.io.UnsupportedEncodingException;
+import androidx.activity.OnBackPressedCallback;
+import androidx.appcompat.app.AppCompatActivity;
 
+import java.nio.charset.StandardCharsets;
 
-public class MainActivity extends Activity
-{
+public class MainActivity extends AppCompatActivity {
     private final String MY_PREFS_NAME = "Preferences";
     private WebView Browser;
-    private String tikTokUrl = "https://www.tiktok.com/foryou";
+    private final String tikTokUrl = "https://www.tiktok.com/foryou";
 
-    private class MyWebViewClient extends WebViewClient
-    {
+    private class MyWebViewClient extends WebViewClient {
         @Override
-        public boolean shouldOverrideUrlLoading(WebView view, String url)
-        {
+        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            String url = request.getUrl().toString();
             view.loadUrl(url);
             saveCookies(url);
             return true;
         }
 
         @Override
-        public void onPageFinished(WebView view, String url){
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            view.loadUrl(url);
             saveCookies(url);
+            return true;
         }
 
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            saveCookies(url);
+        }
     }
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
-    public void onCreate(Bundle savedInstanceState)
-    {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_web_browser);
 
-        Browser = (WebView) findViewById(R.id.webView1);
-        Browser.setWebViewClient(new WebViewClient());
+        Browser = findViewById(R.id.webView1);
+        Browser.setWebViewClient(new MyWebViewClient());
         WebSettings webSettings = Browser.getSettings();
+
         // needed for viewing videos
         webSettings.setJavaScriptEnabled(true);
         webSettings.setDomStorageEnabled(true);
-        //to handle your cache
+        // to handle your cache
         webSettings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        webSettings.setAppCacheEnabled(true);
-        //webSettings.setAppCachePath(cacheDir.path);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             CookieManager.getInstance().setAcceptThirdPartyCookies(Browser, true);
@@ -77,25 +77,27 @@ public class MainActivity extends Activity
 
         Browser.loadUrl(tikTokUrl);
 
-    }
-
-    @Override
-    public void onBackPressed() {
-        if(Browser.canGoBack()) {
-            Browser.goBack();
-        } else {
-            super.onBackPressed();
-        }
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (Browser != null && Browser.canGoBack()) {
+                    Browser.goBack();
+                } else {
+                    setEnabled(false);
+                    getOnBackPressedDispatcher().onBackPressed();
+                }
+            }
+        });
     }
 
     private void loadCookies() {
         try {
             SharedPreferences prefs = getSharedPreferences(MY_PREFS_NAME, MODE_PRIVATE);
-            String name = prefs.getString("session", "No session found"); //"No session found" is the default value.
+            String name = prefs.getString("session", "No session found"); // "No session found" is the default value.
 
             byte[] data = Base64.decode(name, Base64.DEFAULT);
-            String text = new String(data, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
+            String text = new String(data, StandardCharsets.UTF_8);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -103,15 +105,16 @@ public class MainActivity extends Activity
     private void saveCookies(String url) {
         try {
             String cookies = CookieManager.getInstance().getCookie(url);
-            byte[] data = cookies.getBytes("UTF-8");
-            String base64 = Base64.encodeToString(data, Base64.DEFAULT);
+            if (cookies != null) {
+                byte[] data = cookies.getBytes(StandardCharsets.UTF_8);
+                String base64 = Base64.encodeToString(data, Base64.DEFAULT);
 
-            SharedPreferences.Editor editor = getSharedPreferences(MY_PREFS_NAME, MODE_PRIVATE).edit();
-            editor.putString("session", base64);
-            editor.apply();
-        } catch (UnsupportedEncodingException e) {
+                SharedPreferences.Editor editor = getSharedPreferences(MY_PREFS_NAME, MODE_PRIVATE).edit();
+                editor.putString("session", base64);
+                editor.apply();
+            }
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
 }

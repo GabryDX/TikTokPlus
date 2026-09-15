@@ -1,3 +1,46 @@
+# Built application files
+*.apk
+*.ap_
+
+# Files for the dex VM
+*.dex
+
+# Java class files
+*.class
+
+# Generated files and build output
+bin/
+gen/
+out/
+build/
+generated/
+/build
+captures/
+/captures
+.externalNativeBuild/
+/externalNativeBuild
+.cxx/
+/cxx
+output-metadata.json
+
+# Gradle files and cache
+.gradle/
+.gradle
+
+# Local configuration file (sdk path, etc)
+local.properties
+/local.properties
+
+# Log/OS Files
+*.log
+
+# System files
+.DS_Store
+
+# Eclipse project files
+.classpath
+.project
+
 # Android Studio & IntelliJ IDEA project files
 *.iml
 .idea/
@@ -18,10 +61,23 @@ render.experimental.xml
 !/.idea/codeStyles/Project.xml
 !/.idea/codeStyles/codeStyleConfig.xml
 
-.gradle
-/local.properties
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# Kotlin
+.kotlin
+
+# Sandbox stuff
+_sandbox
+
+# Keystore files
+*.jks
+*.keystore
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
+
+# Android Profiling
+*.hprof
+
+# Custom
+images/background
+images/icons
+images/monochrome
