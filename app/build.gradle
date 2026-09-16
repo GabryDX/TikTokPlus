@@ -9,7 +9,8 @@ android {
     defaultConfig {
         applicationId "com.gabrydx.tiktok"
         minSdk 23
-        targetSdk 35
+        //noinspection EditedTargetSdkVersion
+        targetSdk 37
         versionCode 1
         versionName "1.0"
 
