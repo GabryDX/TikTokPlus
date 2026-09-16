@@ -18,7 +18,6 @@ package com.gabrydx.tiktok
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.webkit.CookieManager
@@ -28,6 +27,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.net.toUri
 
 class MainActivity : AppCompatActivity() {
     private var browser: WebView? = null
@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         private fun handleUrlLoading(view: WebView, url: String): Boolean {
-            val uri = Uri.parse(url)
+            val uri = url.toUri()
             val host = uri.host
             if (host != null && (host.endsWith("tiktok.com") || host.endsWith("tiktokcdn.com"))) {
                 // Allow WebView to load the URL
