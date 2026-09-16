@@ -28,6 +28,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.edit
 import java.nio.charset.StandardCharsets
 
 class MainActivity : AppCompatActivity() {
@@ -110,9 +111,9 @@ class MainActivity : AppCompatActivity() {
                 val data = cookies.toByteArray(StandardCharsets.UTF_8)
                 val base64 = Base64.encodeToString(data, Base64.DEFAULT)
 
-                val editor = getSharedPreferences(MY_PREFS_NAME, MODE_PRIVATE).edit()
-                editor.putString("session", base64)
-                editor.apply()
+                getSharedPreferences(MY_PREFS_NAME, MODE_PRIVATE).edit {
+                    putString("session", base64)
+                }
             }
         } catch (e: Exception) {
             Log.e("MainActivity", "Error saving cookies", e)
