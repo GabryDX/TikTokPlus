@@ -18,19 +18,36 @@ package com.gabrydx.tiktok
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.webkit.CookieManager
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.net.toUri
+import com.gabrydx.tiktok.databinding.ActivityWebBrowserBinding
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var binding: ActivityWebBrowserBinding
     private var browser: WebView? = null
+    
+    // For File Uploads
+    private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
+    
+    // For Fullscreen Video
+    private var customView: View? = null
+    private var customViewCallback: WebChromeClient.CustomViewCallback? = null
 
     private inner class MyWebViewClient : WebViewClient() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
@@ -62,13 +79,80 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private inner class MyWebChromeClient : WebChromeClient() {
+        override fun onProgressChanged(view: WebView, newProgress: Int) {
+            super.onProgressChanged(view, newProgress)
+            if (newProgress < 100) {
+                binding.progressBar.visibility = View.VISIBLE
+                binding.progressBar.progress = newProgress
+            } else {
+                binding.progressBar.visibility = View.GONE
+                binding.swipeRefreshLayout.isRefreshing = false
+            }
+        }
+
+        override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
+            super.onShowCustomView(view, callback)
+            if (customView != null) {
+                callback?.onCustomViewHidden()
+                return
+            }
+            customView = view
+            customViewCallback = callback
+            binding.fullscreenContainer.addView(view)
+            binding.fullscreenContainer.visibility = View.VISIBLE
+            binding.swipeRefreshLayout.visibility = View.GONE
+        }
+
+        override fun onHideCustomView() {
+            super.onHideCustomView()
+            if (customView == null) return
+            binding.fullscreenContainer.visibility = View.GONE
+            binding.fullscreenContainer.removeView(customView)
+            customView = null
+            customViewCallback?.onCustomViewHidden()
+            customViewCallback = null
+            binding.swipeRefreshLayout.visibility = View.VISIBLE
+        }
+        
+        override fun onShowFileChooser(
+            webView: WebView?,
+            filePathCallback: ValueCallback<Array<Uri>>?,
+            fileChooserParams: FileChooserParams?
+        ): Boolean {
+            fileUploadCallback?.onReceiveValue(null)
+            fileUploadCallback = filePathCallback
+            
+            val intent = fileChooserParams?.createIntent()
+            try {
+                if (intent != null) {
+                    startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE)
+                }
+            } catch (e: Exception) {
+                fileUploadCallback = null
+                return false
+            }
+            return true
+        }
+    }
+
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_web_browser)
+        enableEdgeToEdge()
+        binding = ActivityWebBrowserBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        browser = findViewById(R.id.webView1)
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { v, insets ->
+            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            insets
+        }
+
+        browser = binding.webView1
         browser?.webViewClient = MyWebViewClient()
+        browser?.webChromeClient = MyWebChromeClient()
         val webSettings = browser?.settings
 
         // needed for viewing videos
@@ -78,6 +162,10 @@ class MainActivity : AppCompatActivity() {
         webSettings?.cacheMode = WebSettings.LOAD_DEFAULT
 
         CookieManager.getInstance().setAcceptThirdPartyCookies(browser, true)
+
+        binding.swipeRefreshLayout.setOnRefreshListener {
+            browser?.reload()
+        }
 
         browser?.loadUrl(TIKTOK_URL)
 
@@ -100,7 +188,20 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
+            if (fileUploadCallback == null) return
+            val result = if (data == null || resultCode != RESULT_OK) null else data.data
+            val results = if (result != null) arrayOf(result) else null
+            fileUploadCallback?.onReceiveValue(results)
+            fileUploadCallback = null
+        } else {
+            super.onActivityResult(requestCode, resultCode, data)
+        }
+    }
+
     companion object {
         private const val TIKTOK_URL = "https://www.tiktok.com/foryou"
+        private const val FILE_CHOOSER_REQUEST_CODE = 100
     }
 }
