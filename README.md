@@ -8,3 +8,7 @@ Hope you enjoy.
 
 
 Of course I don't own any right over TikTok app and stuff, this is just a custom browser.
+
+## License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
