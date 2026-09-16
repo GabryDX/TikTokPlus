@@ -17,9 +17,9 @@
 package com.gabrydx.tiktok
 
 import android.annotation.SuppressLint
-import android.content.SharedPreferences
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
-import android.util.Base64
 import android.util.Log
 import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
@@ -28,8 +28,6 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.edit
-import java.nio.charset.StandardCharsets
 
 class MainActivity : AppCompatActivity() {
     private var browser: WebView? = null
@@ -37,21 +35,30 @@ class MainActivity : AppCompatActivity() {
     private inner class MyWebViewClient : WebViewClient() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
             val url = request.url.toString()
-            view.loadUrl(url)
-            saveCookies(url)
-            return true
+            return handleUrlLoading(view, url)
         }
 
         @Suppress("DEPRECATION")
         @Deprecated("Deprecated in Java")
         override fun shouldOverrideUrlLoading(view: WebView, url: String): Boolean {
-            view.loadUrl(url)
-            saveCookies(url)
-            return true
+            return handleUrlLoading(view, url)
         }
 
-        override fun onPageFinished(view: WebView, url: String) {
-            saveCookies(url)
+        private fun handleUrlLoading(view: WebView, url: String): Boolean {
+            val uri = Uri.parse(url)
+            val host = uri.host
+            if (host != null && (host.endsWith("tiktok.com") || host.endsWith("tiktokcdn.com"))) {
+                // Allow WebView to load the URL
+                return false
+            }
+            // Block or open external links in the default browser to prevent malicious redirects
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, uri)
+                view.context.startActivity(intent)
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Failed to open URL", e)
+            }
+            return true
         }
     }
 
@@ -72,8 +79,6 @@ class MainActivity : AppCompatActivity() {
 
         CookieManager.getInstance().setAcceptThirdPartyCookies(browser, true)
 
-        loadCookies()
-
         browser?.loadUrl(TIKTOK_URL)
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
@@ -89,39 +94,13 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun loadCookies() {
-        try {
-            val prefs: SharedPreferences = getSharedPreferences(MY_PREFS_NAME, MODE_PRIVATE)
-            val name = prefs.getString("session", "No session found") // "No session found" is the default value.
-
-            if (name != null && name != "No session found") {
-                val data = Base64.decode(name, Base64.DEFAULT)
-                val text = String(data, StandardCharsets.UTF_8)
-                Log.d("MainActivity", "Loaded cookies: $text")
-            }
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Error loading cookies", e)
-        }
-    }
-
-    private fun saveCookies(url: String) {
-        try {
-            val cookies = CookieManager.getInstance().getCookie(url)
-            if (cookies != null) {
-                val data = cookies.toByteArray(StandardCharsets.UTF_8)
-                val base64 = Base64.encodeToString(data, Base64.DEFAULT)
-
-                getSharedPreferences(MY_PREFS_NAME, MODE_PRIVATE).edit {
-                    putString("session", base64)
-                }
-            }
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Error saving cookies", e)
-        }
+    override fun onDestroy() {
+        // Ensure cookies are flushed to persistent storage securely
+        CookieManager.getInstance().flush()
+        super.onDestroy()
     }
 
     companion object {
-        private const val MY_PREFS_NAME = "Preferences"
         private const val TIKTOK_URL = "https://www.tiktok.com/foryou"
     }
 }
