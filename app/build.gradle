@@ -33,6 +33,15 @@ android {
     buildFeatures {
         viewBinding = true
     }
+
+    androidComponents {
+        onVariants(selector().withBuildType("release")) { variant ->
+            variant.outputs.each { output ->
+                output.outputFileName.set("TikTokPlus-v${defaultConfig.versionName}.apk")
+            }
+        }
+    }
+
 }
 
 dependencies {
