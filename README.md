@@ -24,6 +24,15 @@ You can download the latest APK from the **[Releases](../../releases)** page (if
 2. Enable "Install from Unknown Sources" in your device settings.
 3. Install and enjoy a more private TikTok experience!
 
+### 🔐 App Verification
+To ensure the authenticity of the APK and verify that it has not been tampered with, you can check its signing certificate using [AppVerifier](https://github.com/soupslurpr/AppVerifier):
+
+* **Package Name:** `com.heronikostudios.tiktokplus`
+* **Signing Certificate SHA-256:**
+  ```text
+  36:D6:9B:D7:8C:8A:44:90:C2:BC:3F:53:29:6A:BD:68:88:7E:2A:50:AD:9B:9D:A1:C3:6C:CC:D6:4E:96:AF:01
+  ```
+
 ## 🛠️ Building from Source
 To build the project yourself, you'll need [Android Studio](https://developer.android.com/studio).
 
