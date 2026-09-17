@@ -1,4 +1,4 @@
-package com.gabrydx.tiktok
+package com.heronikostudios.tiktokplus
 
 import org.junit.Test
 import org.junit.Assert.assertEquals

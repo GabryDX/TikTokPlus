@@ -3,16 +3,16 @@ plugins {
 }
 
 android {
-    namespace = 'com.gabrydx.tiktok'
+    namespace = 'com.heronikostudios.tiktokplus'
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.gabrydx.tiktok"
+        applicationId = "com.heronikostudios.tiktokplus"
         minSdk = 23
         //noinspection EditedTargetSdkVersion
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }

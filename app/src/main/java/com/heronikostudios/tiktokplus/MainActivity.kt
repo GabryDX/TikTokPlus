@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.gabrydx.tiktok
+package com.heronikostudios.tiktokplus
 
 import android.annotation.SuppressLint
 import android.content.Intent
@@ -37,7 +37,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.net.toUri
-import com.gabrydx.tiktok.databinding.ActivityWebBrowserBinding
+import com.heronikostudios.tiktokplus.databinding.ActivityWebBrowserBinding
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityWebBrowserBinding
