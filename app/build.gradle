@@ -35,9 +35,10 @@ android {
     }
 
     androidComponents {
-        onVariants(selector().withBuildType("release")) { variant ->
+        onVariants(selector().all()) { variant ->
+            String suffix = variant.buildType == 'release' ? '' : "-${variant.buildType}"
             variant.outputs.each { output ->
-                output.outputFileName.set("TikTokPlus-v${defaultConfig.versionName}.apk")
+                output.outputFileName.set("TikTokPlus-v${defaultConfig.versionName}${suffix}.apk")
             }
         }
     }
