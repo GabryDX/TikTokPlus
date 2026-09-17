@@ -31,6 +31,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
@@ -49,6 +50,12 @@ class MainActivity : AppCompatActivity() {
     private var customView: View? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
 
+    private val fileChooserLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        val results = WebChromeClient.FileChooserParams.parseResult(result.resultCode, result.data)
+        fileUploadCallback?.onReceiveValue(results)
+        fileUploadCallback = null
+    }
+
     private inner class MyWebViewClient : WebViewClient() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
             val url = request.url.toString()
@@ -64,7 +71,7 @@ class MainActivity : AppCompatActivity() {
         private fun handleUrlLoading(view: WebView, url: String): Boolean {
             val uri = url.toUri()
             val host = uri.host
-            if (host != null && (host.endsWith("tiktok.com") || host.endsWith("tiktokcdn.com"))) {
+            if ((host != null) && (host.endsWith("tiktok.com") || host.endsWith("tiktokcdn.com"))) {
                 // Allow WebView to load the URL
                 return false
             }
@@ -118,21 +125,26 @@ class MainActivity : AppCompatActivity() {
         override fun onShowFileChooser(
             webView: WebView?,
             filePathCallback: ValueCallback<Array<Uri>>?,
-            fileChooserParams: FileChooserParams?
+            fileChooserParams: FileChooserParams?,
         ): Boolean {
             fileUploadCallback?.onReceiveValue(null)
             fileUploadCallback = filePathCallback
-            
+
             val intent = fileChooserParams?.createIntent()
-            try {
-                if (intent != null) {
-                    startActivityForResult(intent, FILE_CHOOSER_REQUEST_CODE)
-                }
-            } catch (e: Exception) {
+            if (intent == null) {
+                fileUploadCallback?.onReceiveValue(null)
                 fileUploadCallback = null
                 return false
             }
-            return true
+
+            return try {
+                fileChooserLauncher.launch(intent)
+                true
+            } catch (_: Exception) {
+                fileUploadCallback?.onReceiveValue(null)
+                fileUploadCallback = null
+                false
+            }
         }
     }
 
@@ -169,17 +181,20 @@ class MainActivity : AppCompatActivity() {
 
         browser?.loadUrl(TIKTOK_URL)
 
-        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                val b = browser
-                if (b != null && b.canGoBack()) {
-                    b.goBack()
-                } else {
-                    isEnabled = false
-                    onBackPressedDispatcher.onBackPressed()
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(enabled = true) {
+                override fun handleOnBackPressed() {
+                    val b = browser
+                    if ((b != null) && b.canGoBack()) {
+                        b.goBack()
+                    } else {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                    }
                 }
-            }
-        })
+            },
+        )
     }
 
     override fun onDestroy() {
@@ -188,20 +203,7 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
-            if (fileUploadCallback == null) return
-            val result = if (data == null || resultCode != RESULT_OK) null else data.data
-            val results = if (result != null) arrayOf(result) else null
-            fileUploadCallback?.onReceiveValue(results)
-            fileUploadCallback = null
-        } else {
-            super.onActivityResult(requestCode, resultCode, data)
-        }
-    }
-
     companion object {
         private const val TIKTOK_URL = "https://www.tiktok.com/foryou"
-        private const val FILE_CHOOSER_REQUEST_CODE = 100
     }
 }
